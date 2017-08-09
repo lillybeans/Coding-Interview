@@ -1,0 +1,18 @@
+Data Structures
+
+- expects wrapper classes (i.e. Integer, Character, Byte) not primitive types (i.e. int, char)
+
+Set: unique set of values with no duplicates
+1. Hashset: no order
+2. LinkedHashSet: has order
+2. Treeset: sorted. Add/Remove: O(log(n))
+
+Map: (k,v) pairs
+1. HashMap: (k,v) pairs allowing null values. Keys are unique.
+
+Table
+1. HashTable: (k,v) with no null values
+
+***Note about HashTables/HashSets/HashMaps***
+Insert/Add/Remove: O(1) constant time, since you are using a hashing function to locate the location 
+of the element right away, and not looping through each element in the table.
