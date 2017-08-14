@@ -6,7 +6,7 @@ import java.util.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-public class missingStockPrice {
+public class missingStockPriceFile {
 	
 	public static LocalDateTime[] timestamps;
 	public static double[] prices;
@@ -14,10 +14,16 @@ public class missingStockPrice {
 	public static ArrayList<Integer> valid_indices;//record indices of valid (not missing) prices
 	public static int rows;
 	public static final int num_missing=20;
+	
+	//for testing
+	public static int file_number=3;
 
 	public static void main(String[] args) throws ParseException, FileNotFoundException{
 		
-		Scanner scanner = new Scanner(System.in); //import util
+		//Scanner scanner = new Scanner(System.in); //import util
+		
+		String filePath = new File("").getAbsolutePath();
+		Scanner scanner=new Scanner(new FileReader(filePath + "/src/stocks"+file_number+".txt"));
 		
 		rows=Integer.parseInt(scanner.nextLine());
 		
@@ -26,7 +32,7 @@ public class missingStockPrice {
 		prices=new double[rows];
 		missing_indices=new ArrayList<Integer>(num_missing); //record indices of missing prices
 		valid_indices=new ArrayList<Integer>();
-		
+		/*
 		for (int i=0; i<rows; i++){
 			
 			String line = scanner.nextLine();
@@ -49,12 +55,54 @@ public class missingStockPrice {
 			
 		}
 		
+		*/
+		int i=0;
+		while(scanner.hasNextLine()){
+			String line = scanner.nextLine();
+			String[] entry=line.split("\t");
+			
+			//capital M: month, capital H:24h, lower m: minute, lower h:12h
+			DateTimeFormatter formatter= DateTimeFormatter.ofPattern("M/d/yyyy HH:mm:ss"); //format is minimum number of digits for each field, but can handle more digits
+			LocalDateTime timestamp=LocalDateTime.parse(entry[0],formatter);
+
+			//Record timestamp and price for current record
+			timestamps[i]=timestamp;
+			
+			if(entry[1].contains("Missing")){
+				missing_indices.add(i);
+			}
+			else{	
+				prices[i]=Double.parseDouble(entry[1]);
+				valid_indices.add(i);
+			}
+			
+			i++;
+		}
+		
+		//read and store answers
+		
+		ArrayList<Double> answers=new ArrayList<Double>();
+		scanner=new Scanner(new FileReader(filePath + "/src/stocks"+file_number+"_answers.txt"));
+		while(scanner.hasNextLine()){
+			double answer=Double.parseDouble(scanner.nextLine());
+			answers.add(answer);
+		}
 		
 		ArrayList<Double> missing_prices=findMissingStockPrices();
-		
+		int count=0;
+		double sum=0;
+		DecimalFormat df=new DecimalFormat("#.000");
 		for (Double missing_price : missing_prices){
-			System.out.println(missing_price.doubleValue());
+			double expected=answers.get(count);
+			double missing = df.parse(df.format(missing_price.doubleValue())).doubleValue();
+			double diff=df.parse(df.format(Math.abs(expected-missing))).doubleValue();
+			double diff_percent=df.parse(df.format(diff/expected*100)).doubleValue();
+			sum += diff_percent;
+			System.out.println("a:"+missing+", e:"+expected+", diff:"+diff+", %:"+diff_percent);
+			count++;
 		}
+		sum = df.parse(df.format(sum/20)).doubleValue();
+		System.out.println("\navg diff %:"+sum);
 		
 	}
 	
@@ -74,10 +122,11 @@ public class missingStockPrice {
 				//y=C0(x^n)+C1(x^(n-1))+C2(x^(n-2)).....+Cn-2(x^2)+Cn-1(x)+Cn
 				double x=(double)timestamps[missing_index].getDayOfYear()/365;
 				missing_price += coefficients[i]*Math.pow(x,coefficients.length-1-i);
-				//intln("coefficient["+i+"]:"+coefficients[i]+",x:"+x);
+				//System.out.println("coefficient["+i+"]:"+coefficients[i]+",x:"+x);
 			}
 			
 			missing_prices.add(missing_price);
+			
 		}
 		
 		return missing_prices;
@@ -89,18 +138,28 @@ public class missingStockPrice {
 		ArrayList<Integer> valid_subset = new ArrayList<Integer>();
 		
 		int min_neighbours=1;
-		int index_range=1;
+		//int index_range=1;
+		int left_range=1;
+		int right_range=0;
 		boolean index_range_found=false;
 		
 		while (!index_range_found)
 		{
 			int neighbours_count=0;
-			index_range++;
+			left_range++;
+			right_range++;
 			
 			for(Integer valid_index: valid_indices)
 			{
-				//boolean within_date_range=Math.abs(timestamps[valid_index].getDayOfYear()-timestamps[missing_index].getDayOfYear()) < date_range;
-				boolean within_index_range=Math.abs(valid_index-missing_index) < index_range;
+				boolean within_index_range=false;
+				
+				if ((valid_index < missing_index) && (missing_index-valid_index) < left_range){
+					within_index_range = true;
+				}
+				else if ((valid_index > missing_index) && (valid_index-missing_index) < right_range){
+					within_index_range=true;
+				}
+				//boolean within_index_range=Math.abs(valid_index-missing_index) < index_range;
 				
 				if (within_index_range)
 				{
@@ -109,6 +168,7 @@ public class missingStockPrice {
 			}
 			
 			if(neighbours_count >= min_neighbours){
+				//System.out.println("missing_i:"+missing_index+", neighbours:"+neighbours_count+", range:"+index_range);
 				index_range_found=true;
 			}
 		}
@@ -116,7 +176,15 @@ public class missingStockPrice {
 		//use the range found to add all points within the range to the valid subset
 		for(Integer valid_index: valid_indices)
 		{
-			boolean within_index_range=Math.abs(valid_index-missing_index) < index_range;
+			//boolean within_index_range=Math.abs(valid_index-missing_index) < index_range;
+			boolean within_index_range=false;
+			
+			if ((valid_index < missing_index) && (missing_index-valid_index) < left_range){
+				within_index_range = true;
+			}
+			else if ((valid_index > missing_index) && (valid_index-missing_index) < right_range){
+				within_index_range=true;
+			}
 			
 			if (within_index_range)
 			{
