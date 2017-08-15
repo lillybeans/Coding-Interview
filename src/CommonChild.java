@@ -12,57 +12,54 @@ public class CommonChild {
 	    	char[] chars1=s1.toCharArray();
 	    	char[] chars2=s2.toCharArray();
 	    	
-	    	//Given: chars1.length == chars2.length
+	    	int[] chars1_cnt=new int[26]; //for A:Z, how many times each letter seen in chars1
+	    	int[] chars2_cnt=new int[26]; //for A:Z, how many times each letter seen in chars2
 	    	
-	    	//ASCII 'A' to 'Z': 65 to 90
-	    	int offset=65;
+	    	for(int i=0; i<chars1.length; i++){
+	    		chars1_cnt[chars1[i]]++;
+	    		chars2_cnt[chars2[i]]++;
+	    	}
 	    	
-	    	//A to Z: record occurence of each letter in the string
-	        int[] chars1_count=new int[26]; 
-	        int[] chars2_count=new int[26];
-	        
-	        for (int i=0; i<chars1.length; i++){
-	        	chars1_count[chars1[i]]++;
-	        	chars2_count[chars2[i]]++;
-	        }
-	        
-	        int maxCommonChild=0;
-	        
-	        //go through each of the 26 letters in the alphabet
-	        for (int i=0; i<26; i++){
-	        	if( chars1_count[i] == 0 || chars2_count[i] == 0){ //if current letter not found in either s1 or s2
-	        		continue;
-	        	}
-	        	
-	        	//found a possible head
-	        	int s1_head = findChar(chars1,(char)(i+offset),1);
-	        	int s2_head = findChar(chars2,(char)(i+offset),1);
-	        	
-	        	int commonChild=0;
-	        	for (int i1=s1_head; i1<chars1.length; i1++){
-	        		for (int i2=s2_head; i2<chars2.length;i2++){
-	        			if (chars1[i1] == chars2[i2]){
-	        				commonChild++;
-	        				continue;
-	        			}
-	        		}
-	        	}
-	        }
-	        
-	        return commonChild;
-	    }
-	    
-	    public static int findChar(char[] chars, char c, int occurrence){
-	    	int cnt=0;
-	    	for (int i=0; i<chars.length;i++){
-	    		if(chars[i]==c){
-	    			cnt++;
-	    			if (cnt == occurrence){
-	    				return i;
-	    			}
+	    	for(int i=0; i<chars1_cnt.length; i++){
+	    		//Case 1: char not found in either string
+	    		if(chars1_cnt[i] == 0 || chars2_cnt[i] == 0)
+	    		{
+	    			chars1_cnt[i]=0; //neither string can use this char in Child
+	    			chars2_cnt[i]=0; //neither string can use this char in Child
 	    		}
 	    	}
-	    	return -1; //not found
+	    	
+	    	//For each string build a linked list containing common chars in both
+	    	ArrayList<Character> chars1_list = new ArrayList<Character>();
+	    	ArrayList<Character> chars2_list = new ArrayList<Character>();
+	    	
+	    	for(int i=0; i<chars1.length; i++){
+	    		if(chars2_cnt[chars1[i]] > 0){ //if the other string uses this char
+	    			chars1_list.add(chars1[i]);
+	    		}
+	    		
+	    		if(chars1_cnt[chars2[i]] > 0){
+	    			chars2_list.add(chars2[i]);
+	    		}
+	    	}
+	    	
+	    	//traverse linked lists
+	    	int maxChild=0;
+
+	    	for (Character c1: chars1_list){
+	    		int child=0;
+	    		int i=0;
+	    		Character c2=chars2_list.get(i);
+	    		while( i<chars2_list.size() && (Character.valueOf(c1) != Character.valueOf(c2))){
+	    			i++;
+	    			c2=chars2_list.get(i);
+	    		}
+	    		
+	    		if(i < chars2_list.size()){
+	    			
+	    		}
+	    	}
+	    	
 	    }
 
 	    public static void main(String[] args) {
