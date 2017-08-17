@@ -10,86 +10,58 @@ public class MaxPalindrome {
 
     static String richieRich(String s, int n, int k){ //n= # digit, k=# digits to change
         
-        if (n==1){
-            if(k>0){
-                return "9"; //return 9
-            }
-            return s; //return original number
-        }
-        
-        int[] digits=new int[n];
+        char[] digits=new char[n]; //convert to char array
         for(int i=0; i<s.length(); i++){
-            digits[i]=s.charAt(i)-'0'; //get int value of char
+            digits[i]=s.charAt(i); 
         }
         
-        boolean[] fixed=new boolean[n];
-        
-        //step 1: palindromize
-        int fix=0;
-        for(int i=0; i<n/2; i++){
-            if(digits[i] != digits[n-1-i]){
-                int greater=Math.max(digits[i],digits[n-1-i]);
-                if(greater == digits[i]){
-                    digits[n-1-i]=digits[i];
-                    fixed[n-1-i]=true;
-                }else{
-                    digits[i]=digits[n-1-i];
-                    fixed[i]=true;
-                }
-                fix++;
-            }
-        }
-        if(k < fix){
-            return "-1"; //no solution
-        }
-
-        k-=fix; //we have this number of digits left that we can fix
-
-
-        //step 2: maximize
-        for(int i=0; i<n/2; i++){
-        	
-        	if(digits[i]==9){ //i=9, n-1-i=9
-        		continue; //next
+        //1. Calculate minimum fixes needed to palindromize (only need to change one digit to make it same as the other)
+        int min_fix=0;
+        for(int i=0, j=n-1; i<j; i++, j--){ //i & j, execute as long as i<j
+        	if(digits[i] != digits[j]){
+        		min_fix++;
         	}
-
-        	if(k>0){ //we can fix at least one number
-        		if(!fixed[i] && !fixed[n-1-i]){ //neither fixed
-        			if (k>=2){
-	        			digits[i]=9;
-	        			digits[n-1-i]=9;
-	        			k-=2; //fixed i, n-1-i
-        			}
+        }
+        if(min_fix > k){
+        	return "-1";
+        }
+        
+        int fix_both=k-min_fix; //number of fixes left for maximization. This way we can turn a non-9 pair into a 9-pair.
+        //e.x. 3114, k=2. min_fix changes 3 into 4, fix_other changes 4 to a 9, 3 to a 9 (free)
+        
+        //2. Actually fix
+        for(int i=0, j=n-1; i<=j; i++,j--){
+        	if(digits[i]!=digits[j]){ 
+        		
+        		char greater=(char)Math.max(digits[i],digits[j]); 
+        		
+        		digits[i]=greater; //mandatory fix to palindromize
+        		digits[j]=greater; //mandatory fix to palindromize
+        		min_fix--; //I just fixed either i or j by setting both to max
+        		
+        		if(greater!='9' && fix_both >=1){ //if fixes left: maximize
+        			digits[i]='9';
+        			digits[j]='9';
+        			fix_both--; //I just fixed the other one, whichever one it was
         		}
-        		else if(fixed[i]){ //i fixed, n-1-i=not fixed
-        			digits[i]=9;
-        			digits[n-1-i]=9;
-        			k--; //fixed n-1-i
-	        	}
-	        	else{ //i not fixed, n-1-i=fixed
-	        		digits[i]=9;
-	        		digits[n-1-i]=9;
-	        		k--; //fixed i
-	        	}
         	}
-            
-            if(i==n/2-1 && k>0 && n%2==1){ //if n is odd and the next char is the middle
-                digits[n/2]=9;
-                break;
-            }
+        	else{ //if chars equal
+        		if(digits[i]!='9' && fix_both >=2) //if fixes left: maximize
+        		{
+        			digits[i]='9';
+        			digits[j]='9';
+        			fix_both-=2;
+        		}
+        	}
+        	
+        	if(i==j && fix_both > 0){
+        		digits[i]='9';
+        	}
         }
         
-        //3. to string
+        return new String(digits);
         
-        return convertToString(digits);
-    }
-    
-    public static String convertToString(int[] array){
-        String res="";
-        for(int i=0; i<array.length; i++){
-            res+=array[i];
-        }
-        return res;
+
     }
 
     public static void main(String[] args) {
