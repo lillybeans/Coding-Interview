@@ -127,5 +127,83 @@ rotate(int[][] matrix){
 String s1s1= s1+ s1; //waterbottlewaterbottle
 return isSubstring(s1s1, s2); //erbottlewat is substring of waterbottlewaterbottle
 
+/* Chapter 4 - graphs */
 
+class Graph{
+	Node[] nodes;
+}
+
+class Node{
+	String name;
+	Node[] adjacent;
+}
+
+//DFS
+void search(Node node){
+	if (node == null) return;
+	visit(node);
+	node.visited=true;
+	for (Node a : node.adjacent){
+		if(a.visited == false){
+			search(a);
+		}
+	}
+}
+
+//BFS
+void search(Node node){
+	Queue queue=new Queue();
+	node.marked=true; 
+	queue.enqueue(node); //add to end of queue
+
+	while(!queue.isEmpty()){
+		Node n=queue.dequeue(); //remove front of queue
+		visit(n);
+		for (Node a in n.adjacent){
+			if(!a.marked){
+				a.marked=true;
+				queue.enqueue(a);
+			}
+		}
+	}
+}/* Chapter 4 - Graphs */
+
+class Graph{
+	Node[] nodes;
+}
+
+class Node{
+	String name;
+	Node[] adjacent;
+}
+
+//DFS
+void search(Node node){
+	if (node == null) return;
+	visit(node);
+	node.visited=true;
+	for (Node a : node.adjacent){
+		if(a.visited == false){
+			search(a);
+		}
+	}
+}
+
+//BFS
+void search(Node node){
+	Queue queue=new Queue();
+	node.marked=true; 
+	queue.enqueue(node); //add to end of queue
+
+	while(!queue.isEmpty()){
+		Node n=queue.dequeue(); //remove front of queue
+		visit(n);
+		for (Node a in n.adjacent){
+			if(!a.marked){
+				a.marked=true;
+				queue.enqueue(a);
+			}
+		}
+	}
+}
 
