@@ -27,7 +27,7 @@ public class MaxPalindrome {
         }
         
         int fix_both=k-min_fix; //number of fixes left for maximization. This way we can turn a non-9 pair into a 9-pair.
-        //e.x. 3114, k=2. min_fix changes 3 into 4, fix_other changes 4 to a 9, 3 to a 9 (free)
+        //e.x. 3114, k=2. min_fix changes 3 into 4, fix_both changes 4 to a 9, 3 to a 9 (free)
         
         //2. Actually fix
         for(int i=0, j=n-1; i<=j; i++,j--){
@@ -54,7 +54,7 @@ public class MaxPalindrome {
         		}
         	}
         	
-        	if(i==j && fix_both > 0){
+        	if(i==j && fix_both > 0){ //middle character of the string
         		digits[i]='9';
         	}
         }
