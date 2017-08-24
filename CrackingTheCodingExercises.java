@@ -1,3 +1,74 @@
+import java.util.HashSet;
+
+/* Chapter 1 - Strings and Arrays */
+
+//1.1 IsUnique: Does string have all unique characters?
+
+//Method 1: check if each char in the alphabet has been hit O(N)
+boolean isUniqueChars(String str){
+  boolean[] char_set=new boolean[128]; //max range
+  
+  for(int i=0; i<str.length(); i++){
+    int val=str.charAt(i);
+    if (char_set[val]){
+      return false;
+    }
+    char_set[val]=true;
+  }
+  return true;
+}
+
+
+//Method 2: 32-bit checker (int has 32 bits)
+boolean isUniqueChars(String str){
+  int checker=0; //0000 0000 0000 0000, 32>26, range covers all of a-z
+  for (int i=0; i<str.length(); i++){
+    int bitInChecker=str.charAt(i)-'a'; //bitInChecker=# of bits to shift
+    if((checker&(1<<val)) > 0){ //if bitInChecker has been set
+      return false;
+    }
+    checker |= (1<<bitInChecker); //1<<bitInChecker = 1 followed by bitInChecker 0's
+    //ex. bitInChecker=5, checker=0000 0000 0000 0000 | 0000 0000 0010 0000
+  }
+  return true;
+}
+
+//1.2 isPermutation: check if two strings are permutations of each other
+
+//Method 1: sort the two strings
+String sort(String s){
+	char[] content=s.toCharArray();
+	java.util.Arrays.sort(content);
+	return new String(content);
+}
+
+boolean permutation(String s, String t){
+	return sort(s).equals(sort(t));
+}
+
+//Method 2: identical char counts
+boolean isPermutation(String s, String t){
+  if (s.length()!=t.length() {
+    return false;
+  }
+  
+  int[] letters=new int[128];
+  
+  char[] s_array=s.toCharArray();
+  for(char c:s_array){
+    letters[c]++;
+  }
+  
+  for(int i==0; i<t.length(); i++){
+    int c=(int) t.charAt(i);
+    letters[c]--;
+    if(letters[c]<0){
+      return false;
+    }
+  }
+  return true;
+}
+
 //1.3 URLify: Replace ' ' with %20
 
 index = trueLength + spaceCount*2; //last index
@@ -14,6 +85,26 @@ for (i=trueLength - 1; i>=0; i--){
 		index--;
 	}
 }
+
+//1.4 Palindrome Permutation: is string a permutation of a palindrome?
+
+//palindrome if at most 1 char has odd counts
+boolean isPermutationOfPalindrome(String s){
+int countOdd=0; //counts total number of chars with odd occurrences
+int[] alphabet=new int[26];
+for(char c:s.toCharArray(){
+  int x=(int)c;
+  alphabet[x]++;
+  if (alphabet[x]%2 == 1){ //update our odd counts as we go along
+    countOdd++;
+  }
+  else{
+    countOdd--;
+  }
+}
+return countOdd <=1;
+}
+   
 
 //1.5 OneEditAway
 
@@ -100,11 +191,13 @@ rotate(int[][] matrix){
 		int first=layer;
 		int last=n-1-layer;
 
-		for(int i=layer; i<n-1-layer;i++){ //walk through cell in each layer
+		for(int i=layer; i<n-1-layer;i++){ //walk through cell in each layer but NOT last cell in segment
 
 			int offset=i-layer;
 			int top=matrix[layer][i]; //save top
-
+			
+			//break down each layer into 4 segments:
+			
 			//right <- top
 			matrix[i][last]=top;
 
@@ -122,51 +215,110 @@ rotate(int[][] matrix){
 	}
 }
 
+//1.8 Zero Matrix: if an element in MxN matrix is 0, set its entire row and column to 0
+
+void setZeros(int[][] matrix){
+	boolean[] row=new boolean[matrix.length];
+	boolean[] column=new boolean[matrix[0].length];
+	
+	//store row indices and column indices with value 0
+	for (int i=0; i<matrix.length; i++){
+	  for (int j=0; j<matrix[0].length; j++){
+	    if (matrix[i][j]==0){
+	      row[i]=true;
+	      column[j]=true;
+	    }
+	  }
+	}
+	
+	//nullify rows
+	for (int i=0; i<row.length; i++){
+	  if(row[i]) nullifyRow(matrix,i);
+	}
+	
+	//nullify columns
+	for (int j=0; j<column.length;j++){
+	  if(column[j]) nullifyColumn(matrix,j);
+	}
+}
+
+void nullifyRow(int[][] matrix, row){
+  for(int j=0; i<matrix[0].length;j++){ //go thru all columns in the row provided
+    matrix[row][j]=0;
+  }
+}
+
+void nullifyColumn(int[][] matrix, column){
+  for(int i=0; i<matrix.length; i++){
+    matrix[i][col]=0;
+  }
+}
+
 //1.9 String rotation
 
 String s1s1= s1+ s1; //waterbottlewaterbottle
 return isSubstring(s1s1, s2); //erbottlewat is substring of waterbottlewaterbottle
 
-/* Chapter 4 - graphs */
 
-class Graph{
-	Node[] nodes;
-}
+/* Chapter 2 - Linked Lists */
 
 class Node{
-	String name;
-	Node[] adjacent;
+	Node next=null;
+	int data;
+	
+	public Node(int d){
+		data=d;
+	}
+	
+	void appendToTail(int d){
+		Node end=new Node(d);
+		Node n=this;
+		while (n.next!=null){
+			n=n.next;
+		}
+		n.next=end;
+	}
 }
 
-//DFS
-void search(Node node){
-	if (node == null) return;
-	visit(node);
-	node.visited=true;
-	for (Node a : node.adjacent){
-		if(a.visited == false){
-			search(a);
+//2.1 Remove Duplicates: remove duplicates from unsorted linked list
+
+void deleteDups(LinkedListNode n){
+	HashSet<Integer> set = new HashSet<Integer>();
+	LinkedListNode previous=null;
+	
+	while(n!=null){
+		if(set.contains(n.data)){
+			previous.next=n.next; //skip n
+		}
+		else{
+			set.add(n.data); //mark n
+			previous=n;
+		}
+		n=n.next;
+	}
+}
 		}
 	}
 }
 
-//BFS
-void search(Node node){
-	Queue queue=new Queue();
-	node.marked=true; 
-	queue.enqueue(node); //add to end of queue
-
-	while(!queue.isEmpty()){
-		Node n=queue.dequeue(); //remove front of queue
-		visit(n);
-		for (Node a in n.adjacent){
-			if(!a.marked){
-				a.marked=true;
-				queue.enqueue(a);
-			}
-		}
+Node deleteNode(Node head, int d){
+	
+	Node n=head;
+	
+	if(n.data == d){
+		return head.next;  //moved head
 	}
-}/* Chapter 4 - Graphs */
+	
+	while(n.next!=null){
+		if (n.next.data==0){
+			n.next=n.next.next;
+			return head; //head didn't change
+		}
+		n=n.next;
+	}
+}
+
+/* Chapter 4 - Graphs */
 
 class Graph{
 	Node[] nodes;
