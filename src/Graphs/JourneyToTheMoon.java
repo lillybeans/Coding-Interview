@@ -30,7 +30,7 @@ public class JourneyToTheMoon {
 			astronauts.get(n2).add(n1);
 		}
 		
-		boolean[] isVisited = new boolean[N];
+		boolean[] isVisited = new boolean[N]; //keeping track of all the unique astronauts
 		ArrayList<Integer> countrySizes=new ArrayList<Integer>(); //size of each country
 		Queue<Integer> queue = new ArrayDeque<Integer>(); //this is how you make a queue
 		
