@@ -1,5 +1,7 @@
 package Graphs;
 
+//also see "PalindromePairs", which is implementatino of Trie
+
 public class Trie {
 	
 	TrieNode root;
@@ -22,10 +24,10 @@ public class Trie {
 		
 		TrieNode current=this.root; //mark current node
 		
-		for(int i=0;i<word.length();i++){ //go through each letter in the word
+		for(int i=0;i<word.length();i++){ //go through each char in the word
 			
 			int x=word.charAt(i) - 'a'; //get int value of char
-			if(current.children[x] == null){ //for current node, no child node exists for this char
+			if(current.children[x] == null){ //for current node, no child node exists for this char in the word
 				current.children[x]=new TrieNode();
 			}
 			//else exists

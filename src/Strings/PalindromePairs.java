@@ -8,6 +8,8 @@ import java.io.*;
 //input: [abcd,dcba,lls,s,sssll]
 //output: (0,1), (1,0), (3,2), (2,4)
 
+//TRIE
+
 
 public class PalindromePairs {
 	

@@ -908,27 +908,28 @@ class Node{
 void search(Node node){
 	if (node == null) return;
 	visit(node);
-	node.visited=true;
-	for (Node a : node.adjacent){
+	node.visited=true; //step 1: set visited to true
+	for (Node a : node.adjacent){ //step 2: visit unvisited children
 		if(a.visited == false){
 			search(a);
 		}
+		return {};
 	}
 }
 
 //BFS: if you have children, enqueue them. Visit according to queue sequence.
 void search(Node node){
 	Queue queue=new Queue();
-	node.marked=true; 
-	queue.enqueue(node); //add to end of queue
+	node.marked=true;  //step 1: mark it
+	queue.enqueue(node); //step 2: enqueue
 
 	while(!queue.isEmpty()){
 		Node n=queue.dequeue(); //remove front of queue
 		visit(n);
 		for (Node a in n.adjacent){
 			if(!a.marked){
-				a.marked=true;
-				queue.enqueue(a);
+				a.marked=true; //step 1: mark it
+				queue.enqueue(a); //step 2: enqueue
 			}
 		}
 	}
