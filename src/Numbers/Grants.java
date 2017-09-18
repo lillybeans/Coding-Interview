@@ -28,12 +28,12 @@ public class Grants {
 					{
 						cap = remainder/(n-1-i);
 						break;
-					}else if(i==0){
+					}else if(i==0){ //ex. [2,5] 3
 						cap=newBudget/n;
 					}
 				}
-				else if(i == 0){
-					cap = newBudget/n;
+				else if(i == 0){ //ex. [4,6] 3 - no grant is smaller than the new budget, then distribute budget evenly among everyone
+					cap = newBudget/n; 
 				}
 			}
 			

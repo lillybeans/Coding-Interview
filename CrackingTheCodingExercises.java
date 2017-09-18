@@ -191,10 +191,10 @@ rotate(int[][] matrix){
 	int n=matrix.length;
 	for (int layer=0; layer<n/2; layer++){ //walk through layers
 
-		int first=layer;
-		int last=n-1-layer;
+		int first=layer; //segment-agnostic layer's first position
+		int last=n-1-layer; //segment-agnostic layer's last position
 
-		for(int i=layer; i<n-1-layer;i++){ //walk through cell in each layer but NOT last cell in segment
+		for(int i=layer; i<n-1-layer;i++){ //walk through cell in each layer but NOT last cell in segment. In each iteration we look at 4 cells
 
 			int offset=i-layer;
 			int top=matrix[layer][i]; //save top
@@ -202,13 +202,13 @@ rotate(int[][] matrix){
 			//break down each layer into 4 segments:
 			
 			//right <- top
-			matrix[i][last]=top;
+			matrix[i][last]=top; //right: flexible row i, fixed column at last
 
 			//bottom <- right
-			matrix[last][last-offset]=matrix[i][last];
+			matrix[last][last-offset]=matrix[i][last]; //bottom: fixed row last, flexible column last-offset
 
 			//left <- bottom
-			matrix[last-offset][first]=matrix[last][last-offset];
+			matrix[last-offset][first]=matrix[last][last-offset]; //left: flexible row "last-offset", fixed column "first"
 
 			//top <- left
 			matrix[first][i]=matrix[last-offset][first];

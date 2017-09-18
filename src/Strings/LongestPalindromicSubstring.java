@@ -16,7 +16,7 @@ public class LongestPalindromicSubstring {
 		//LPS[i][j]=true if str[i...j] is palindrome
 		boolean[][] LPS=new boolean[n][n];
 
-		//Length 1(Diagonal): always palindromic
+		//Base case 1: for odd-length palindromes: Length 1(Diagonal): str[i..i] always palindromic since it's 1 char
 		int maxLength=1;
 		int start=0; //index of where longest palindrome starts
 
@@ -24,7 +24,7 @@ public class LongestPalindromicSubstring {
 			LPS[i][i]=true;
 		}
 
-		//Length 2: palindromic if the two chars equal
+		//Base case 2: for even-length palindromes: Length 2: palindromic if the two chars equal
 		for(int i=0; i<n-1; i++){
 			if(chars[i+1] == chars[i]){
 				LPS[i][i+1]=true;
@@ -33,7 +33,7 @@ public class LongestPalindromicSubstring {
 			}
 		}
 
-		//Length 3+
+		//Length 3+: build from one of the 2 base cases above
 		for (int length=3; length<=n; length++){ 
 			for(int i=0; i<n-length+1; i++){ //# of rows we need to check
 				int j=i+length-1;

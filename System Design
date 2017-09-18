@@ -1,0 +1,388 @@
+***********************************************
+General Steps:
+
+1. Scope: 
+- What key services will you provide?
+- What kind of data do you need to keep track of?
+- Will you need multiple machines? (cue: "millions" of documents). How will we divide the data? lookup table?
+- Restrictions on how the user will access your data? Feature restrictions?
+
+2. Reasonable assumptions:
+- Maximum number of users
+- Maximum memory needed
+
+3. Major components
+- Frontend server
+- Backend datastore
+- Web crawling servers
+- Analytics servers
+- Thinking about the flow of how your service works helps.
+
+4. Key issues/Scalability
+- bottlenecks/challenges? (i.e. TinyURL: some URLs peak, others are infrequently accessed)
+
+5. Redesign key issues
+- using a cache?
+
+Knowledge:
+
+1. Horizontal Scaling: increasing number of nodes (i.e. servers)
+
+2. Vertical Scaling: increase resources of a specific node (add memory to a server to improve its ability to handle load changes)
+
+3. Load Balancer: behind front-end to help distribute distribute the load evenly so one server won't crash and take own the whole system. 
+You'll need a network of cloned servers (i.e. same code and access to same data) for this to work.
+
+4. Data Denormalization and NoSQL: joins are slow so we avoid them.
+Denormalization: adding redundant info to speed up reads.
+NoSQL: does not support joins, different data structure, but scales better.
+
+5. Database Partitioning/Sharding: split data across multiple machines, and can figure out which machine data is on.
+- Vertical Partitioning: partition by feature 
+- Key-Based/Hash-Based Partitioning: mod(key,n) across N servers. Adding additional servers is expensive since N is fixed.
+- Directory-Based partitioning: maintain lookup table for where data can be found. Risk: single source of failure, constantly accessing the table impacts performance.
+
+6. Caching: in-memory cache to speed up result delivery. simple key-value pairing sits between your application and your data store.
+First try cache, then data store.
+
+7. Asynchronous Processing & Queues: Slow operations should be async, or else user will wait forever for process to complete, so we notify them when done.
+
+8. Networking Metrics:
+- Bandwidth: max data that can be transferred in a unit of time. (bps, Gbps)
+- Throughput: actual amount of data transferred (bps, Gbps)
+- Latency: delay between send and receive - how long it takes data to go from one end to the other. Important for online multiplayer games where we need to notify user fast enough.
+
+9. MapReduce: for processing large data
+- Map: inputs data, outputs <key,value> pair
+- Reduce: inputs <key,value> pair, aggregates them in some way and reduces to a new <key,value>
+
+10. Log files
+log files are good for storing intermediate results before storing them in database to minimize number of writes
+
+Considerations
+- Failures
+- Availability and Reliability 
+- Read-heavy vs. Write-heavy
+- Security
+
+
+***********************************************
+
+Example: Find all documents that contain a list of words
+
+Question: Given millions of docs, find all docs that contain a list of words. Must be complete words (i.e. "book" != "bookkeeper")
+
+Solution:
+Use a hashtable and pre-process each document and store the results. For multiple words, just find intersection of results (i.e. "many books" -> {doc3,doc8})
+
+"books" -> {doc2,doc3,doc6,doc8}
+"many" -> {doc1, doc3, doc7, doc8, doc9}
+
+Distribute data across multiple machines since we have millions of docs. Each machine: one letter in the alphabet.
+
+Example:
+
+Machine 1: "after amaze"
+"after" -> doc1,doc5,doc7
+"amaze" -> doc2,doc5, doc7
+
+Machine 3: "builds boat banana"
+"builds" -> doc3,doc4,doc5
+"boat" -> doc2,doc3,doc5
+"banana" -> doc3,doc4,doc5
+
+input: {after,amaze,builds,boat,banana"
+output: {doc5}
+
+--------------------------------------------------------
+
+9.1 Stock Data
+
+Question: Build a service allowing thousands of clients to get end-of-day stock price (open,close,high,low)
+
+Solutions: 
+1. let clients download text files through FTP
+2. store stock prices in SQL
+pros: queryable
+cons: heavy weight, need front-end UI for access
+3. XML
+pros: can append easily, most languages have libraries support XML parsing, can be read by machine and human
+cons: sends client all info even if they may only need a part of it (not queryable). Performing queries requires going thru entire file.
+both pro/con: client can only use data how we expect to (i.e. they can't query for "highest stock price")
+
+--------------------------------------------------------
+
+9.2 Social Network
+
+Question: How would you design the data structures for a very large social network like Facebook or LinkedIn? 
+How would you show shortest path b/w 2 people? (Me -> Bob -> Susan)
+
+Solution: 
+
+Step 1: Solve the problem without worrying about millions of users
+
+-bidirectional BFS (DFS will find A PATH, but not necessarily the shortest path) until src and dest collide
+
+Code: 
+Person searchLevel(HashMap<Integer, Person> people, BFSData primary, BFSData secondary) //search one level and return collision if any
+
+LinkedList<Person> findPathBidirBFS(HashMap<Integer, Person> people, int source, int destination){
+...
+while != finished:
+Person collision = searchLevel(people, sourceData, destData); //search from source
+...
+if collision from src is null:
+collision = searchLevel(people, destData, sourceData); //search from dest
+...
+}
+
+k = num of friends each person has
+q = average path length
+
+BFS: O(k^q)
+Bidirectional BFS: O(k^(q/2) + k^(q/2)) = O(k^(q/2))
+
+Step 2: Millions of users
+
+1. for each friend ID: int machine_index = getMachineIDForUser(personID);
+2. go to machine machine_index
+3. On that machine, do: Person friend = getPersonWithID(person_id);
+
+
+class Server{
+	HashMap<Integer, Machines> machines
+	HashMap<Integer, Integer> personToMachineMap
+	
+	public Machine getMachineWithId(int machineID);
+	public int getMachineIDForUser(int personID);
+	public Person getPersonWithID(int personID);
+}
+
+Optimizations:
+- Reduce machine jumps: If 5 of my friends are on the same machine, I should look at them all at once
+- Smart division of people and machines: more likely to be friends with people of same country/city
+- caching (maybe most accessed friends? or friends from same city?)
+
+--------------------------------------------------------
+
+9.3 Web Crawler: if you were designing a web crawler, how do you avoid getting into infinite loops?
+
+Solution:
+infinite loops occur when cycles occur, so we just need to detect cycles. We can use hashtable where hash[v]=true after we visit page v
+
+Use BFS. Everytime we visit a page, gather all its links, insert them at end of queue. if we've visited a page, ignore it.
+
+We probably want to prioritize which pages to crawl. Pages that are very similar should be deprioritized. So, if page X is next on our list
+and out database shows that another page with same signature as X has been crawled recently, then we insert this page back into db at low priority.
+if not, we crawl X and insert its links.
+
+To avoid loops, either
+- cap min priority
+- cap number of pages checked
+
+--------------------------------------------------------
+
+9.4 Duplicate URLs: YOu have 10 billion URLs. How do you detect duplicate URLs?
+
+assume: 100 char/url, then 10 billion  4 TB, will not hold this in memory
+
+Solution 1: Disk storage
+- Split URLs into 4000 chunks of 1GB each. use Hash(URL) % 4000
+- load each 1GB into memory one at a time and check for duplicates.
+
+Solution 2: Multiple Machines
+same as above, but instead of storing data in file_x.txt, we send URL to machine x.
+
+--------------------------------------------------------
+
+9.5 Cache
+
+Question: web server for simplified search engine, which has 100 machines to respond to search queries. 
+It uses processSearch(string query) to delegate. Cannot guarantee same request will always be sent to same server.
+processSearch() is very expensive, design caching to speed up, and explain how to update cache when data changes.
+
+Assume:
+- calling betwen machines is quick
+- can cache millions
+- most popular queries are extremely popular such that they will always be in the cache
+
+Require:
+- efficient lookups given key (hashtable)
+- expiration of old data so we replace it with new data (linked list)
+
+So we can create a linked list where item is bumped to the front each time it's accessed, and last one is removed when it exceeds a certain size.
+
+Check package SystemDesign > Cache.java for implementation
+
+Step 2:
+
+How do we expand this to different machines?
+
+Option 1: Give each machine its own cache (problem: if "foo" sent to m1 the first time then m2, treated as fresh queries on both machines. works best when consistently sent to same machine_
+Option 2: Each machine has a copy of the cache. (drawback: updating the cache requires firing off to N machines, also takes up lots of space)
+Option 3: Each machine stores a segment of cache (machine to machine calls. if not found on machine i, need to look at machine j.)
+Could use hash(query)%N to figure out which machine stores the result of this query.
+
+Step 3: Updating results when contents change
+
+1. The content at a URL changes
+2. The ordering of results change in response to the rank of a page changing
+3. New pages appear related to a particular query
+
+Suggested: use automatic time-out (purge data after x minutes of inaccess), this will handle #3 with facility
+
+Step 4: Further Enhancements
+
+If a query is so popular, instead of machine i forward the request to machine j every time, it could store the results in its own cache as well.
+
+--------------------------------------------------------
+
+9.6 Sales Rank
+
+large e-Commerce wants t list best selling products, overall and by category.
+
+Step 1: Scope
+What does sales rank mean? total sales over all time? Sales in the last month? last week? Ask interviewer.
+
+Step 2: Assumptions
+- data does not need to be 100% up-to-date (i.e. can be hour old)
+- data updated every hour
+- each product can belong to multiple categories, so there will be no subcategories
+
+Step 3: Components
+Purchase System > Database > Sales rank data > front-end
+
+Strategy:
+- store total sales from last week instead of listing every purchase in database
+- instead of having a single column called "total sales from last week" and update it everyday, we could do:
+_____________________________________________________________
+Prod ID | Total | Sun | Mon | Tues | Wed | Thurs | Fri | Sat
+_____________________________________________________________
+
+Every day, we clear out the corresponding day of the week.
+On each purchase, we update total sales count for that product on that day of the week, as well as total count.
+
+also need another table
+_____________________
+Prod ID | Category ID
+_____________________
+
+Step 4: Implementation
+
+1. Minimize db writes
+Since we want to minimize number of database writes, we should batch our database writes:
+store purchases in in-memory cache (and log file as backup), and periodically update the database (i.e. once per hour)
+
+After db update, re-run sales rank data. Careful though. If you update product A at 4pm and product B at 5pm, different time ranges
+apply for these sales data. 
+
+2. Minimize joins (joins are expensive)
+
+Instead of thousands of queries (one for each category), do a one time join of Product with Category, then sort by category.
+
+_______________________________________________________________________
+Prod ID | Category | Total | Sun | Mon | Tues | Wed | Thurs | Fri | Sat
+_______________________________________________________________________
+1423	| sportseq | 13	   |  4  |  1  |  4   | 19  | 322   | 32  | 232
+_______________________________________________________________________
+1423	| safety   | 13	   |  4  |  1  |  4   | 19  | 322   | 32  | 232
+_______________________________________________________________________
+
+3. if db writes still expensive, consider log files
+
+/sportsequipment
+1423, Dec 13 08:23 - Dec 13 08:23, 1
+4221, Dec 13 15:22 - Dec 15 15:45, 5
+/safety
+1423, Dec 13 08:23 - Dec 13 08:23, 1
+5221, Dec 12 03:19 - Dec 12 03:28, 19
+
+--------------------------------------------------------
+
+9.7 Personal Financial Manager
+
+Design a financial manager that is connected to your bank accounts and analyzees your spending habits to make recommendations.
+
+Step 1: Scope the problem
+- can add multiple bank accounts at any time
+- financial history: outgoing money, incoming money, current money
+- each payment transaction has "category" (food, travel, etc.)
+- website (mobile app later)
+- email notifications
+- no user-specified rules for assigning categories to transactions
+
+Step 2: Assumptions
+- write-heavy
+- banks won't push to us, we'll pull data from banks (hourly or daily). Less active users will be pulled less frequently.
+- alerts on exceeding budgets won't be sent instantaneously - safe for up to 24 hours
+
+Step 3: Draw Major Components
+
+Bank Data Synchronizer -> Raw Transaction Data -> Categorized Transactions -> Budget Analyzer -> Budget Data <---> Front-end
+
+Budget analyzer: pulls in categorized transactions and updates each user's budget per category and stores the user's budget
+
+Step 4: Optimizations & Challenges
+
+We will want to queue our tasks since our system is write-heavy.
+We'll have a lot of inactive users so we want to figure out a way to remove them/deprioritize them.
+Biggest bottleneck: massive amount of data that needs to be pulled and analyzed.
+We should fetch bank data asyncly and run across many servers.
+
+
+--------------------------------------------------------
+
+9.8 Pastebin
+
+Design a system where user can enter a piece of text and get a randomly generated URL for public access.
+
+Step 1: Scope
+- documents cannot be edited
+- system trakc snalaytics of how many times each page is accessed
+- old documents get deleted after some time of inaccess 
+- users shouldn't be able to guess document URLs easily, although no authentication
+
+Assume we have millions of documents and heavy traffic, but traffic not eventually distributed across documents.
+
+Step 2: Components
+
+URL to File Database ---> server with files
+					 ---> server with files
+					 ---> server with files
+					 
+Solution: 
+1. Cache for frequently accessed data. Since documents are not edited we don't have to worry about invalidating the cache.
+2. Shard the database
+
+How to generate the actual URL?
+1. 10-character sequence of letters and numbers (36^10 possible combos, even with billion URLs, rare collisions)
+
+Step 3: Analytics
+we want to display the number of visit, so probably store like
+
+URL | Month and Year | Visits
+
+Better to have a storage_probability associated with each URL based on how frequently each URL is accessed.
+
+--------------------------------------------------------
+
+7.7 Chat Server (Object-Oriented Design)
+
+Step 1: Requirements
+- Sign in (online and offline)
+- Friend Requests (sending, accepting, rejecting)
+- Updating a status message
+- 1-on-1 and group chats
+- Adding new messages to private and group chats
+
+Step 2: Core components
+- database (SQL, bigTable)
+- set of clients
+- set of servers
+
+Communication b/w client and server: XML.
+Want to split across multiple servers so we don't have single point of failure (i.e. if one machine controlls all user sign ins and it goes down,
+we don't want to cut off millions of users due to lost network connectiviy)
+
+
+

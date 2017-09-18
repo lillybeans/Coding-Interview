@@ -47,6 +47,7 @@ public class MergeIntervals {
 			if(cur.end >= next.start ){ //overlap between current and next
 				next.start=cur.start; //next = merge(current,next)
 				next.end=Math.max(cur.end,next.end);
+				
 			}
 		}
 		
